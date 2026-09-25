@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Terminal Build</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+        font-family: "Courier New", monospace;
+        color: #00ff66;
+    }
+
+    body {
+        background: #000;
+    }
+
+    /* TOP TERMINAL BAR */
+    .topbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 38px;
+        background: #080808;
+        border-bottom: 1px solid #151515;
+        display: flex;
+        align-items: center;
+        padding-left: 15px;
+        z-index: 10;
+        color: #777;
+        font-size: 13px;
+    }
+
+    .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        margin-right: 7px;
+    }
+
+    .red {
+        background: #ff5f56;
+    }
+
+    .yellow {
+        background: #ffbd2e;
+    }
+
+    .green {
+        background: #27c93f;
+    }
+
+    .title {
+        margin-left: 10px;
+        color: #777;
+    }
+
+    /* TERMINAL */
+    #terminal {
+        position: absolute;
+        top: 38px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 88%;
+        max-width: 1450px;
+        height: calc(100vh - 38px);
+        overflow-y: auto;
+        padding: 25px 0 120px 0;
+
+        scrollbar-width: none;
+    }
+
+    #terminal::-webkit-scrollbar {
+        display: none;
+    }
+
+    #screen {
+        width: 100%;
+        font-size: 15px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .line {
+        min-height: 23px;
+    }
+
+    .dim {
+        color: #00a83f;
+    }
+
+    .bright {
+        color: #00ff66;
+    }
+
+    .success {
+        color: #00ff66;
+        font-weight: bold;
+    }
+
+    .white {
+        color: #d8ffd8;
+    }
+
+    .warning {
+        color: #aaffaa;
+    }
+
+    .cursor {
+        display: inline-block;
+        width: 9px;
+        height: 17px;
+        background: #00ff66;
+        margin-left: 3px;
+        vertical-align: middle;
+        animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+        0%, 45% {
+            opacity: 1;
+        }
+
+        46%, 100% {
+            opacity: 0;
+        }
+    }
+
+    @media (max-width: 700px) {
+        #terminal {
+            width: 94%;
+        }
+
+        #screen {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <div class="title">developer@workspace — terminal</div>
+</div>
+
+<div id="terminal">
+    <div id="screen"></div>
+</div>
+
+<script>
+
+const terminal = document.getElementById("terminal");
+const screen = document.getElementById("screen");
+
+/*
+    ==============================
+       SETTINGS
+    ==============================
+*/
+
+const TOTAL_TIME = 10 * 60 * 1000; // 10 minutes
+
+// Smaller number = faster scrolling
+const LINE_DELAY = 82;
+
+
+/*
+    ==============================
+       HELPERS
+    ==============================
+*/
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function random(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function timeStamp() {
+    const now = new Date();
+
+    return now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    });
+}
+
+function addLine(text, type = "bright") {
+
+    const line = document.createElement("div");
+
+    line.className = "line " + type;
+
+    line.textContent = text;
+
+    screen.appendChild(line);
+
+    /*
+       Keep the newest text visible automatically.
+    */
+    terminal.scrollTop = terminal.scrollHeight;
+}
+
+function addPrompt(command) {
+
+    addLine(
+        "developer@workspace:~$ " + command,
+        "white"
+    );
+}
+
+
+/*
+    ==============================
+       RANDOM TERMINAL DATA
+    ==============================
+*/
+
+const modules = [
+    "core",
+    "auth",
+    "database",
+    "api",
+    "frontend",
+    "backend",
+    "router",
+    "config",
+    "cache",
+    "session",
+    "security",
+    "logger",
+    "scheduler",
+    "storage",
+    "services",
+    "components",
+    "runtime",
+    "compiler",
+    "engine",
+    "network"
+];
+
+const actions = [
+    "initializing",
+    "loading",
+    "processing",
+    "checking",
+    "building",
+    "compiling",
+    "optimizing",
+    "validating",
+    "resolving",
+    "registering",
+    "connecting",
+    "syncing",
+    "generating",
+    "preparing",
+    "updating"
+];
+
+const files = [
+    "main.js",
+    "app.js",
+    "server.js",
+    "config.js",
+    "router.js",
+    "database.js",
+    "auth.js",
+    "index.js",
+    "utils.js",
+    "client.js",
+    "runtime.js",
+    "service.js",
+    "logger.js",
+    "worker.js",
+    "module.js",
+    "controller.js",
+    "component.js"
+];
+
+const statuses = [
+    "OK",
+    "READY",
+    "PASSED",
+    "COMPLETE",
+    "SUCCESS"
+];
+
+
+/*
+    ==============================
+       INITIAL STARTUP
+    ==============================
+*/
+
+async function startup() {
+
+    addLine("──────────────────────────────────────────────────────────────────────────────", "dim");
+
+    addPrompt("clear");
+
+    await sleep(250);
+
+    addPrompt("npm run build");
+
+    await sleep(180);
+
+    addLine("");
+
+    addLine(
+        "[" + timeStamp() + "] starting development environment...",
+        "dim"
+    );
+
+    await sleep(120);
+
+    addLine(
+        "[" + timeStamp() + "] runtime initialized",
+        "success"
+    );
+
+    await sleep(100);
+
+    addLine(
+        "[" + timeStamp() + "] environment: production",
+        "bright"
+    );
+
+    await sleep(100);
+
+    addLine(
+        "[" + timeStamp() + "] node runtime detected",
+        "success"
+    );
+
+    await sleep(100);
+
+    addLine(
+        "[" + timeStamp() + "] dependency graph loaded",
+        "success"
+    );
+
+    await sleep(100);
+
+    addLine(
+        "[" + timeStamp() + "] workspace ready",
+        "success"
+    );
+
+    await sleep(150);
+
+    addLine("");
+
+    addLine("BUILD PIPELINE INITIALIZED", "white");
+
+    addLine("──────────────────────────────────────────────────────────────────────────────", "dim");
+
+}
+
+
+/*
+    ==============================
+       GENERATE REALISTIC LOGS
+    ==============================
+*/
+
+function generateLog() {
+
+    const module =
+        modules[random(0, modules.length - 1)];
+
+    const action =
+        actions[random(0, actions.length - 1)];
+
+    const file =
+        files[random(0, files.length - 1)];
+
+    const status =
+        statuses[random(0, statuses.length - 1)];
+
+    const number =
+        random(10, 9999);
+
+    const ms =
+        random(4, 180);
+
+    const type = Math.random();
+
+    if (type < 0.25) {
+
+        return {
+            text:
+                "[" + timeStamp() + "] " +
+                module +
+                " :: " +
+                action +
+                " " +
+                file +
+                " [" +
+                status +
+                "]",
+            type: "bright"
+        };
+
+    } else if (type < 0.45) {
+
+        return {
+            text:
+                "  ✓ " +
+                module +
+                "/" +
+                file +
+                " processed successfully (" +
+                ms +
+                "ms)",
+            type: "success"
+        };
+
+    } else if (type < 0.62) {
+
+        return {
+            text:
+                "  → resolving dependency: " +
+                module +
+                "@" +
+                random(1, 9) +
+                "." +
+                random(0, 9) +
+                "." +
+                random(0, 9),
+            type: "dim"
+        };
+
+    } else if (type < 0.78) {
+
+        return {
+            text:
+                "  ✓ validation check #" +
+                number +
+                " passed",
+            type: "success"
+        };
+
+    } else if (type < 0.90) {
+
+        return {
+            text:
+                "[" +
+                timeStamp() +
+                "] cache hit :: " +
+                module +
+                " :: " +
+                random(80, 99) +
+                "%",
+            type: "bright"
+        };
+
+    } else {
+
+        return {
+            text:
+                "  ✓ checksum verified :: " +
+                file +
+                " :: " +
+                number,
+            type: "success"
+        };
+
+    }
+
+}
+
+
+/*
+    ==============================
+       MAIN 10-MINUTE LOOP
+    ==============================
+*/
+
+async function runTerminal() {
+
+    screen.innerHTML = "";
+
+    await startup();
+
+    const startTime = performance.now();
+
+    let counter = 0;
+
+    while (performance.now() - startTime < TOTAL_TIME) {
+
+        const log = generateLog();
+
+        addLine(log.text, log.type);
+
+        counter++;
+
+        /*
+            Every few hundred lines,
+            show a progress message.
+        */
+
+        if (counter % 120 === 0) {
+
+            const elapsed =
+                performance.now() - startTime;
+
+            const progress =
+                Math.min(
+                    99,
+                    Math.floor(
+                        (elapsed / TOTAL_TIME) * 100
+                    )
+                );
+
+            addLine(
+                "[" +
+                timeStamp() +
+                "] build progress :: " +
+                progress +
+                "% :: " +
+                random(1000, 9999) +
+                " operations completed",
+                "success"
+            );
+        }
+
+        if (counter % 250 === 0) {
+
+            addLine(
+                "──────────────────────────────────────────────────────────────────────────────",
+                "dim"
+            );
+
+        }
+
+        await sleep(LINE_DELAY);
+    }
+
+
+    /*
+        ==============================
+           FINAL SUCCESS
+        ==============================
+    */
+
+    addLine("");
+    addLine("──────────────────────────────────────────────────────────────────────────────", "dim");
+
+    addLine(
+        "[" + timeStamp() + "] finalizing build...",
+        "bright"
+    );
+
+    await sleep(250);
+
+    addLine(
+        "[" + timeStamp() + "] running final validation...",
+        "bright"
+    );
+
+    await sleep(250);
+
+    addLine(
+        "✓ all modules validated",
+        "success"
+    );
+
+    await sleep(150);
+
+    addLine(
+        "✓ all tests passed",
+        "success"
+    );
+
+    await sleep(150);
+
+    addLine(
+        "✓ dependencies resolved",
+        "success"
+    );
+
+    await sleep(150);
+
+    addLine(
+        "✓ production bundle generated",
+        "success"
+    );
+
+    await sleep(150);
+
+    addLine(
+        "✓ deployment package ready",
+        "success"
+    );
+
+    await sleep(150);
+
+    addLine("");
+    addLine(
+        "BUILD SUCCESSFUL",
+        "success"
+    );
+
+    addLine(
+        "PROCESS COMPLETED WITHOUT ERRORS",
+        "success"
+    );
+
+    addLine(
+        "STATUS: ONLINE",
+        "success"
+    );
+
+    addLine(
+        "──────────────────────────────────────────────────────────────────────────────",
+        "dim"
+    );
+
+    addLine("");
+
+    addPrompt("system status");
+
+    await sleep(150);
+
+    addLine(
+        "SYSTEM STATUS: OPERATIONAL",
+        "success"
+    );
+
+    addLine(
+        "ALL SERVICES: RUNNING",
+        "success"
+    );
+
+    addLine(
+        "TERMINAL SESSION: ACTIVE",
+        "success"
+    );
+
+    /*
+       Keep cursor at the end.
+    */
+
+    const cursorLine = document.createElement("div");
+
+    cursorLine.className = "line";
+
+    cursorLine.innerHTML =
+        '<span class="bright">developer@workspace:~$</span>' +
+        '<span class="cursor"></span>';
+
+    screen.appendChild(cursorLine);
+
+    terminal.scrollTop = terminal.scrollHeight;
+}
+
+
+/*
+    START
+*/
+
+runTerminal();
+
+</script>
+
+</body>
+</html>
